@@ -6,3 +6,4 @@ Yylex.java
 *.class
 y.output
 out/*
+target/*

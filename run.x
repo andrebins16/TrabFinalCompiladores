@@ -18,14 +18,14 @@ ASM="$OUT_DIR/$BASE.s"
 OBJ="$OUT_DIR/$BASE.o"
 EXE="$OUT_DIR/$BASE"
 
-# Gera assembly (arquivo .s dentro de build/)
-java Parser "$SRC" > "$ASM"
+# Gera assembly
+java -cp target Parser "$SRC" > "$ASM"
 
 # Monta e linka (32 bits)
 as --32 -o "$OBJ" "$ASM"
 ld -m elf_i386 -s -o "$EXE" "$OBJ"
 
 echo "Gerado:"
-echo " - Assembly:  $ASM"
-echo " - Objeto:    $OBJ"
-echo " - Executável:$EXE"
+echo "  Assembly:  $ASM"
+echo "  Objeto:    $OBJ"
+echo "  Executável:$EXE"
