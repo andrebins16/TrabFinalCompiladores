@@ -1,13 +1,12 @@
-# Compilador e ferramentas
 JFLEX  = java -jar libs/JFlex.jar 
 BYACCJ = libs/yacc.linux -tv -J
 JAVAC  = javac
 
-# Diretórios
 SRC_DIR = src
+GEN_DIR = $(SRC_DIR)/gen
 OUT_DIR = target
 
-# Alvos principais
+
 all: Parser.class
 
 run: Parser.class
@@ -17,23 +16,20 @@ build: clean Parser.class
 
 clean:
 	rm -f *~ *.o *.s y.output
-	rm -f $(SRC_DIR)/Yylex.java $(SRC_DIR)/Parser.java $(SRC_DIR)/ParserVal.java $(SRC_DIR)/y.output
 	rm -rf $(OUT_DIR)
+	rm -rf $(GEN_DIR)
 
-# Compilação
-Parser.class: $(SRC_DIR)/TS_entry.java $(SRC_DIR)/TabSimb.java $(SRC_DIR)/Yylex.java $(SRC_DIR)/Parser.java
+# compila
+Parser.class: $(SRC_DIR)/TS_entry.java $(SRC_DIR)/TabSimb.java $(GEN_DIR)/Yylex.java $(GEN_DIR)/Parser.java
 	mkdir -p $(OUT_DIR)
-	$(JAVAC) -d $(OUT_DIR) $(SRC_DIR)/*.java
+	$(JAVAC) -d $(OUT_DIR) $(SRC_DIR)/*.java $(GEN_DIR)/*.java
 
-# Geração do lexer
-$(SRC_DIR)/Yylex.java: $(SRC_DIR)/GeradorDeCodigo.flex
-	# Força geração dentro de src/
-	cd $(SRC_DIR) && java -jar ../libs/JFlex.jar GeradorDeCodigo.flex
+# gera yylex
+$(GEN_DIR)/Yylex.java: $(SRC_DIR)/GeradorDeCodigo.flex
+	mkdir -p $(GEN_DIR)
+	cd $(SRC_DIR) && java -jar ../libs/JFlex.jar -d gen GeradorDeCodigo.flex
 
-
-# Geração do parser
-$(SRC_DIR)/Parser.java: $(SRC_DIR)/GeradorDeCodigo.y
-	$(BYACCJ) $(SRC_DIR)/GeradorDeCodigo.y
-	@if [ -f Parser.java ]; then mv Parser.java $(SRC_DIR)/Parser.java; fi
-	@if [ -f ParserVal.java ]; then mv ParserVal.java $(SRC_DIR)/ParserVal.java; fi
-	@if [ -f y.output ]; then mv y.output $(SRC_DIR)/y.output; fi
+# gera parser
+$(GEN_DIR)/Parser.java: $(SRC_DIR)/GeradorDeCodigo.y
+	mkdir -p $(GEN_DIR)
+	cd $(GEN_DIR) && ../../$(BYACCJ) ../../$(SRC_DIR)/GeradorDeCodigo.y
