@@ -1,29 +1,39 @@
-# only works with the Java extension of yacc: 
-# byacc/j from http://troi.lincom-asg.com/~rjamison/byacc/
-
+# Compilador e ferramentas
 JFLEX  = java -jar libs/JFlex.jar 
 BYACCJ = libs/yacc.linux -tv -J
 JAVAC  = javac
 
-# targets:
+# Diretórios
+SRC_DIR = src
+OUT_DIR = target
 
+# Alvos principais
 all: Parser.class
 
 run: Parser.class
-	java -cp target Parser
+	java -cp $(OUT_DIR) Parser
 
 build: clean Parser.class
 
 clean:
-	rm -f *~ *.o *.s Yylex.java Parser.java y.output ParserVal.java
-	rm -rf target
+	rm -f *~ *.o *.s y.output
+	rm -f $(SRC_DIR)/Yylex.java $(SRC_DIR)/Parser.java $(SRC_DIR)/ParserVal.java $(SRC_DIR)/y.output
+	rm -rf $(OUT_DIR)
 
-Parser.class: TS_entry.java TabSimb.java Yylex.java Parser.java
-	mkdir -p target
-	$(JAVAC) -d target *.java
+# Compilação
+Parser.class: $(SRC_DIR)/TS_entry.java $(SRC_DIR)/TabSimb.java $(SRC_DIR)/Yylex.java $(SRC_DIR)/Parser.java
+	mkdir -p $(OUT_DIR)
+	$(JAVAC) -d $(OUT_DIR) $(SRC_DIR)/*.java
 
-Yylex.java: GeradorDeCodigo.flex
-	$(JFLEX) GeradorDeCodigo.flex
+# Geração do lexer
+$(SRC_DIR)/Yylex.java: $(SRC_DIR)/GeradorDeCodigo.flex
+	# Força geração dentro de src/
+	cd $(SRC_DIR) && java -jar ../libs/JFlex.jar GeradorDeCodigo.flex
 
-Parser.java: GeradorDeCodigo.y
-	$(BYACCJ) GeradorDeCodigo.y
+
+# Geração do parser
+$(SRC_DIR)/Parser.java: $(SRC_DIR)/GeradorDeCodigo.y
+	$(BYACCJ) $(SRC_DIR)/GeradorDeCodigo.y
+	@if [ -f Parser.java ]; then mv Parser.java $(SRC_DIR)/Parser.java; fi
+	@if [ -f ParserVal.java ]; then mv ParserVal.java $(SRC_DIR)/ParserVal.java; fi
+	@if [ -f y.output ]; then mv y.output $(SRC_DIR)/y.output; fi
