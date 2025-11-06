@@ -10,8 +10,9 @@
 %token WHILE,TRUE, FALSE, IF, ELSE
 %token EQ, LEQ, GEQ, NEQ 
 %token AND, OR
+%token PLUSEQUAL
 
-%right '='
+%right '=' PLUSEQUAL
 %left OR
 %left AND
 %left  '>' '<' EQ LEQ GEQ NEQ
@@ -54,6 +55,13 @@ cmd :  ID '=' exp	';' {  System.out.println("\tPOPL %EDX");
   						   System.out.println("\tMOVL %EDX, _"+$1);
 					     }
 			| '{' lcmd '}' { System.out.println("\t\t# terminou o bloco..."); }
+
+	  | ID PLUSEQUAL exp ';' { 
+			System.out.println("\tPUSHL _" + $1);
+			gcExpArit('+');
+			System.out.println("\tPOPL %EDX");
+			System.out.println("\tMOVL %EDX, _" + $1);
+		}
 					     
 					       
       | WRITE '(' LIT ')' ';' { strTab.add($3);
@@ -223,7 +231,7 @@ exp :  NUM  { System.out.println("\tPUSHL $"+$1); }
 
 							
 		void gcExpArit(int oparit) {
- 				System.out.println("\tPOPL %EBX");
+ 			System.out.println("\tPOPL %EBX");
    			System.out.println("\tPOPL %EAX");
 
    		switch (oparit) {

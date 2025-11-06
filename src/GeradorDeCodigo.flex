@@ -60,6 +60,8 @@ NL  = \n | \r | \r\n
 ">="   {  return Parser.GEQ; }
 "!="   {  return Parser.NEQ; }
 
+"+="   {  return Parser.PLUSEQUAL; }
+
 "&&"   { return Parser.AND; }
 "||"   {  return Parser.OR; }
 

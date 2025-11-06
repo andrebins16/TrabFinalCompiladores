@@ -15,4 +15,3 @@ void main() {
     write (" c (14)=  ", c );
     write (" d (2)=  ", d );
 }
-
