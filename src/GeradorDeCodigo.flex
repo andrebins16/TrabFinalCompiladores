@@ -32,6 +32,9 @@ NL  = \n | \r | \r\n
 {NL}   {yyline++;}
 [ \t]+ { }
 
+"++"   { return Parser.INC; }
+"--"   { return Parser.DEC; }
+
 /* operadores */
 
 "+" |

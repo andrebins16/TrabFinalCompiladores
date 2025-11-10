@@ -11,6 +11,7 @@
 %token EQ, LEQ, GEQ, NEQ 
 %token AND, OR
 %token PLUSEQUAL
+%token INC, DEC
 
 %right '=' PLUSEQUAL
 %left OR
@@ -19,6 +20,7 @@
 %left '+' '-'
 %left '*' '/' '%'
 %left '!' 
+%nonassoc INC DEC
 
 %type <sval> ID
 %type <sval> LIT
@@ -139,22 +141,21 @@ exp :  NUM  { System.out.println("\tPUSHL $"+$1); }
  		| ID   { System.out.println("\tPUSHL _"+$1); }
     | '(' exp	')' 
     | '!' exp       { gcExpNot(); }
-     
-		| exp '+' exp		{ gcExpArit('+'); }
-		| exp '-' exp		{ gcExpArit('-'); }
-		| exp '*' exp		{ gcExpArit('*'); }
-		| exp '/' exp		{ gcExpArit('/'); }
-		| exp '%' exp		{ gcExpArit('%'); }
-																			
-		| exp '>' exp		{ gcExpRel('>'); }
-		| exp '<' exp		{ gcExpRel('<'); }											
-		| exp EQ exp		{ gcExpRel(EQ); }											
-		| exp LEQ exp		{ gcExpRel(LEQ); }											
-		| exp GEQ exp		{ gcExpRel(GEQ); }											
-		| exp NEQ exp		{ gcExpRel(NEQ); }											
-												
-		| exp OR exp		{ gcExpLog(OR); }											
-		| exp AND exp		{ gcExpLog(AND); }											
+	| exp '+' exp		{ gcExpArit('+'); }
+	| exp '-' exp		{ gcExpArit('-'); }
+	| exp '*' exp		{ gcExpArit('*'); }
+	| exp '/' exp		{ gcExpArit('/'); }
+	| exp '%' exp		{ gcExpArit('%'); }
+																		
+	| exp '>' exp		{ gcExpRel('>'); }
+	| exp '<' exp		{ gcExpRel('<'); }											
+	| exp EQ exp		{ gcExpRel(EQ); }											
+	| exp LEQ exp		{ gcExpRel(LEQ); }											
+	| exp GEQ exp		{ gcExpRel(GEQ); }											
+	| exp NEQ exp		{ gcExpRel(NEQ); }											
+											
+	| exp OR exp		{ gcExpLog(OR); }											
+	| exp AND exp		{ gcExpLog(AND); }											
 	| ID '=' exp
 	{
 		System.out.println("\tPOPL %EDX");                     // EDX = valor
@@ -169,6 +170,46 @@ exp :  NUM  { System.out.println("\tPUSHL $"+$1); }
 		System.out.println("\tPOPL %EDX");                     // EDX = soma
 		System.out.println("\tMOVL %EDX, _"+$1);               // _id = soma
 		System.out.println("\tPUSHL %EDX");                    // deixa valor no topo (resultado da expressão)
+	}
+
+	| INC ID
+	{
+	System.out.println("\tPUSHL _"+$2);
+	System.out.println("\tPUSHL $1");
+	gcExpArit('+');
+	System.out.println("\tPOPL %EDX");
+	System.out.println("\tMOVL %EDX, _"+$2);
+	System.out.println("\tPUSHL _"+$2);
+	}
+
+	| DEC ID
+	{
+	System.out.println("\tPUSHL _"+$2);
+	System.out.println("\tPUSHL $1");
+	gcExpArit('-');
+	System.out.println("\tPOPL %EDX");
+	System.out.println("\tMOVL %EDX, _"+$2);
+	System.out.println("\tPUSHL _"+$2);
+	}
+
+	| ID INC
+	{
+	System.out.println("\tPUSHL _"+$1);
+	System.out.println("\tPUSHL $1");
+	gcExpArit('+');
+	System.out.println("\tPOPL %EDX");
+	System.out.println("\tPUSHL _"+$1);
+	System.out.println("\tMOVL %EDX, _"+$1);
+	}
+
+	| ID DEC
+	{
+	System.out.println("\tPUSHL _"+$1);
+	System.out.println("\tPUSHL $1");
+	gcExpArit('-');
+	System.out.println("\tPOPL %EDX");
+	System.out.println("\tPUSHL _"+$1);
+	System.out.println("\tMOVL %EDX, _"+$1);
 	}
 		;							
 
