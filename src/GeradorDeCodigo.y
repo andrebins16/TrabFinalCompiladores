@@ -51,18 +51,9 @@ lcmd : lcmd cmd
 	   |
 	   ;
 	   
-cmd :  ID '=' exp	';' {  System.out.println("\tPOPL %EDX");
-  						   System.out.println("\tMOVL %EDX, _"+$1);
-					     }
-			| '{' lcmd '}' { System.out.println("\t\t# terminou o bloco..."); }
+cmd :  exp	';' {System.out.println("\tPOPL %EAX");}
 
-	  | ID PLUSEQUAL exp ';' { 
-			System.out.println("\tPUSHL _" + $1);
-			gcExpArit('+');
-			System.out.println("\tPOPL %EDX");
-			System.out.println("\tMOVL %EDX, _" + $1);
-		}
-					     
+	  | '{' lcmd '}' { System.out.println("\t\t# terminou o bloco..."); }					     
 					       
       | WRITE '(' LIT ')' ';' { strTab.add($3);
                                 System.out.println("\tMOVL $_str_"+strCount+"Len, %EDX"); 
@@ -164,7 +155,21 @@ exp :  NUM  { System.out.println("\tPUSHL $"+$1); }
 												
 		| exp OR exp		{ gcExpLog(OR); }											
 		| exp AND exp		{ gcExpLog(AND); }											
-		
+	| ID '=' exp
+	{
+		System.out.println("\tPOPL %EDX");                     // EDX = valor
+		System.out.println("\tMOVL %EDX, _"+$1);               // _id = valor
+		System.out.println("\tPUSHL %EDX");                    // deixa valor no topo (resultado da expressão)
+	}
+
+	| ID PLUSEQUAL exp
+	{
+		System.out.println("\tPUSHL _"+$1);                    // empilha id
+		gcExpArit('+');                                        // (id) + (exp) -> topo
+		System.out.println("\tPOPL %EDX");                     // EDX = soma
+		System.out.println("\tMOVL %EDX, _"+$1);               // _id = soma
+		System.out.println("\tPUSHL %EDX");                    // deixa valor no topo (resultado da expressão)
+	}
 		;							
 
 
