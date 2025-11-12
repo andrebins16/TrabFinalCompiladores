@@ -233,12 +233,12 @@ exp :  NUM  { System.out.println("\tPUSHL $"+$1); }
 			System.out.println("\tCMPL $0, %EAX");
 			System.out.printf("\tJE rot_%02d\n", pRot.peek());
 		}
-	'exp'
+	exp
 		{
 			System.out.printf("\tJMP rot_%02d\n", pRot.peek()+1);
 			System.out.printf("rot_%02d:\n", pRot.peek());
 		}
-	':' 'exp'
+	':' exp
 		{
 			System.out.printf("rot_%02d:\n", pRot.peek()+1);      
 			pRot.pop();
