@@ -105,19 +105,33 @@ cmd :  exp	';' {System.out.println("\tPOPL %EAX");}
 							pRot.pop();
 							}  
 							
-			| IF '(' exp {	
-											pRot.push(proxRot);  proxRot += 2;
-															
-											System.out.println("\tPOPL %EAX");
-											System.out.println("\tCMPL $0, %EAX");
-											System.out.printf("\tJE rot_%02d\n", pRot.peek());
-										}
-								')' cmd 
+	| IF '(' exp {	
+									pRot.push(proxRot);  proxRot += 2;
+													
+									System.out.println("\tPOPL %EAX");
+									System.out.println("\tCMPL $0, %EAX");
+									System.out.printf("\tJE rot_%02d\n", pRot.peek());
+								}
+						')' cmd 
 
-             restoIf {
-											System.out.printf("rot_%02d:\n",pRot.peek()+1);
-											pRot.pop();
-										}
+		restoIf {
+									System.out.printf("rot_%02d:\n",pRot.peek()+1);
+									pRot.pop();
+								}
+
+	| DO {
+		pRot.push(proxRot);  proxRot += 2;
+		System.out.printf("rot_%02d:\n", pRot.peek());   // início do laço
+	}
+	'{' lcmd '}'
+	WHILE '(' exp ')' ';'
+	{
+		System.out.println("\tPOPL %EAX   # testa condicao do do-while...");
+		System.out.println("\tCMPL $0, %EAX");
+		System.out.printf("\tJNE rot_%02d\n", pRot.peek());     // se verdadeiro, volta pro início
+		System.out.printf("rot_%02d:\n", (int)pRot.peek()+1);   // saída do laço
+		pRot.pop();
+	}
      ;
      
      
