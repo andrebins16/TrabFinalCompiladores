@@ -14,6 +14,7 @@
 %token INC, DEC
 
 %right '=' PLUSEQUAL
+%right '?' ':'
 %left OR
 %left AND
 %left  '>' '<' EQ LEQ GEQ NEQ
@@ -211,7 +212,24 @@ exp :  NUM  { System.out.println("\tPUSHL $"+$1); }
 	System.out.println("\tPUSHL _"+$1);
 	System.out.println("\tMOVL %EDX, _"+$1);
 	}
-		;							
+	| exp '?'
+		{
+			pRot.push(proxRot);  proxRot += 2; 
+			System.out.println("\tPOPL %EAX");
+			System.out.println("\tCMPL $0, %EAX");
+			System.out.printf("\tJE rot_%02d\n", pRot.peek());
+		}
+	'exp'
+		{
+			System.out.printf("\tJMP rot_%02d\n", pRot.peek()+1);
+			System.out.printf("rot_%02d:\n", pRot.peek());
+		}
+	':' 'exp'
+		{
+			System.out.printf("rot_%02d:\n", pRot.peek()+1);      
+			pRot.pop();
+		}
+	;							
 
 
 %%

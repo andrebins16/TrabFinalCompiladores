@@ -1,0 +1,14 @@
+int a; 
+int b; 
+int c;
+
+void main() {  
+    a = 1;
+    b = a++;
+    c = ++a + b++;
+    --c;
+    
+    write (" a (3) =  ", a );
+    write (" b (2) =  ", b );
+    write (" c (3) =  ", c );
+}

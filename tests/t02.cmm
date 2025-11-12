@@ -1,0 +1,20 @@
+int a; 
+int b; 
+int c;
+
+void main() {
+    a = b = c = 1;  
+    a += b += c += 5;
+    
+    write (" a (8) =  ", a );
+    write (" b (7) =  ", b );
+    write (" c (6) =  ", c );
+
+    a += 1;
+    b += 2;
+    c += 3;
+    write (" ");
+    write (" a (9) =  ", a );
+    write (" b (9) =  ", b );
+    write (" c (9) =  ", c );
+}

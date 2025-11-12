@@ -1,0 +1,19 @@
+int a; 
+int b; 
+int c;
+
+void main() {  
+    a = 1;
+    a = a++ + ++a;
+    write (" a (4) =  ", a );
+    
+    a = 1;
+    a += a++ + ++a;
+    write (" a (7) =  ", a );
+    
+   
+    b = 10;
+    c = --b + b--;
+    write (" b (8) =  ", b );
+    write (" c (18) =  ", c );
+}
