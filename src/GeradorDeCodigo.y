@@ -13,6 +13,7 @@
 %token PLUSEQUAL
 %token INC, DEC
 %token FOR, DO
+%token BREAK, CONTINUE
 
 %right '=' PLUSEQUAL
 %right '?' ':'
@@ -92,46 +93,46 @@ cmd :  exp	';' {System.out.println("\tPOPL %EAX");}
 								}
          
     | WHILE {
-					pRot.push(proxRot);  proxRot += 2;
-					System.out.printf("rot_%02d:\n",pRot.peek());
+					pLoop.push(proxRot);  proxRot += 2;
+					System.out.printf("rot_%02d:\n",pLoop.peek());
 				  } 
 			 '(' exp ')' {
 			 							System.out.println("\tPOPL %EAX   # desvia se falso...");
 											System.out.println("\tCMPL $0, %EAX");
-											System.out.printf("\tJE rot_%02d\n", (int)pRot.peek()+1);
+											System.out.printf("\tJE rot_%02d\n", (int)pLoop.peek()+1);
 										} 
 				cmd		{
-				  		System.out.printf("\tJMP rot_%02d   # terminou cmd na linha de cima\n", pRot.peek());
-							System.out.printf("rot_%02d:\n",(int)pRot.peek()+1);
-							pRot.pop();
+				  		System.out.printf("\tJMP rot_%02d   # terminou cmd na linha de cima\n", pLoop.peek());
+							System.out.printf("rot_%02d:\n",(int)pLoop.peek()+1);
+							pLoop.pop();
 							}  
 							
 	| IF '(' exp {	
-									pRot.push(proxRot);  proxRot += 2;
+									pCond.push(proxRot);  proxRot += 2;
 													
 									System.out.println("\tPOPL %EAX");
 									System.out.println("\tCMPL $0, %EAX");
-									System.out.printf("\tJE rot_%02d\n", pRot.peek());
+									System.out.printf("\tJE rot_%02d\n", pCond.peek());
 								}
 						')' cmd 
 
 		restoIf {
-									System.out.printf("rot_%02d:\n",pRot.peek()+1);
-									pRot.pop();
+									System.out.printf("rot_%02d:\n",pCond.peek()+1);
+									pCond.pop();
 								}
 
 	| DO {
-		pRot.push(proxRot);  proxRot += 2;
-		System.out.printf("rot_%02d:\n", pRot.peek());   // início do laço
+		pLoop.push(proxRot);  proxRot += 2;
+		System.out.printf("rot_%02d:\n", pLoop.peek());   // início do laço
 	}
 	'{' lcmd '}'
 	WHILE '(' exp ')' ';'
 	{
 		System.out.println("\tPOPL %EAX   # testa condicao do do-while...");
 		System.out.println("\tCMPL $0, %EAX");
-		System.out.printf("\tJNE rot_%02d\n", pRot.peek());     // se verdadeiro, volta pro início
-		System.out.printf("rot_%02d:\n", (int)pRot.peek()+1);   // saída do laço
-		pRot.pop();
+		System.out.printf("\tJNE rot_%02d\n", pLoop.peek());     // se verdadeiro, volta pro início
+		System.out.printf("rot_%02d:\n", (int)pLoop.peek()+1);   // saída do laço
+		pLoop.pop();
 	}
 
 | FOR '(' expfor1 ';'
@@ -142,10 +143,10 @@ cmd :  exp	';' {System.out.println("\tPOPL %EAX");}
          *   rot + 2  = cmd
          *   rot + 3  = teste
          */
-        pRot.push(proxRot);
+        pLoop.push(proxRot);
         proxRot += 4;
         
-        int base = pRot.peek();
+        int base = pLoop.peek();
 
         // rotulo teste
         System.out.printf("rot_%02d:\n", base + 3);  
@@ -156,49 +157,69 @@ cmd :  exp	';' {System.out.println("\tPOPL %EAX");}
         System.out.println("\tCMPL $0, %EAX");
 
         //condição falsa , vai para saida
-        System.out.printf("\tJE rot_%02d\n", pRot.peek() + 1);
+        System.out.printf("\tJE rot_%02d\n", pLoop.peek() + 1);
 
         //condicao verdadeiro, vai para cmd
-        System.out.printf("\tJMP rot_%02d\n", pRot.peek() + 2);
+        System.out.printf("\tJMP rot_%02d\n", pLoop.peek() + 2);
     }
     ';'
     {
         // rotulo incremento
-        System.out.printf("rot_%02d:\n", pRot.peek());
+        System.out.printf("rot_%02d:\n", pLoop.peek());
     }
     expfor1
     {
         //incrementou, vai para teste
-        System.out.printf("\tJMP rot_%02d\n", pRot.peek() + 3);
+        System.out.printf("\tJMP rot_%02d\n", pLoop.peek() + 3);
 
         //rotulo cmd
-        System.out.printf("rot_%02d:\n", pRot.peek() + 2);
+        System.out.printf("rot_%02d:\n", pLoop.peek() + 2);
     }
     ')'
     cmd
     {
         //terminou comando, vai p incremento
-        System.out.printf("\tJMP rot_%02d\n", pRot.peek());
+        System.out.printf("\tJMP rot_%02d\n", pLoop.peek());
 
         //rotulo saida
-        System.out.printf("rot_%02d:\n", pRot.peek() + 1);
+        System.out.printf("rot_%02d:\n", pLoop.peek() + 1);
 
-        pRot.pop();
+        pLoop.pop();
     }
+
+	| BREAK ';'
+      {
+        if (pLoop.empty()) {
+            yyerror("(sem) comando 'break' fora de um laco");
+        } else {
+            int base = pLoop.peek();
+            System.out.printf("\tJMP rot_%02d\t# break\n", base + 1);
+        }
+      }
+
+    | CONTINUE ';'
+      {
+        if (pLoop.empty()) {
+            yyerror("(sem) comando 'continue' fora de um laco");
+        } else {
+            int base = pLoop.peek();
+            System.out.printf("\tJMP rot_%02d\t# continue\n", base);
+        }
+      }
     ;
      
      
 restoIf : ELSE  {
-											System.out.printf("\tJMP rot_%02d\n", pRot.peek()+1);
-											System.out.printf("rot_%02d:\n",pRot.peek());
+											System.out.printf("\tJMP rot_%02d\n", pCond.peek()+1);
+											System.out.printf("rot_%02d:\n",pCond.peek());
 								
 										} 							
 							cmd  
 							
 							
 		| {
-		    System.out.printf("\tJMP rot_%02d\n", pRot.peek()+1);
-				System.out.printf("rot_%02d:\n",pRot.peek());
+		    System.out.printf("\tJMP rot_%02d\n", pCond.peek()+1);
+				System.out.printf("rot_%02d:\n",pCond.peek());
 				} 
 		;	
 
@@ -302,20 +323,20 @@ exp :  NUM  { System.out.println("\tPUSHL $"+$1); }
 	}
 	| exp '?'
 		{
-			pRot.push(proxRot);  proxRot += 2; 
+			pCond.push(proxRot);  proxRot += 2; 
 			System.out.println("\tPOPL %EAX");
 			System.out.println("\tCMPL $0, %EAX");
-			System.out.printf("\tJE rot_%02d\n", pRot.peek());
+			System.out.printf("\tJE rot_%02d\n", pCond.peek());
 		}
 	exp
 		{
-			System.out.printf("\tJMP rot_%02d\n", pRot.peek()+1);
-			System.out.printf("rot_%02d:\n", pRot.peek());
+			System.out.printf("\tJMP rot_%02d\n", pCond.peek()+1);
+			System.out.printf("rot_%02d:\n", pCond.peek());
 		}
 	':' exp
 		{
-			System.out.printf("rot_%02d:\n", pRot.peek()+1);      
-			pRot.pop();
+			System.out.printf("rot_%02d:\n", pCond.peek()+1);      
+			pCond.pop();
 		}
 	;							
 
@@ -329,7 +350,8 @@ exp :  NUM  { System.out.println("\tPUSHL $"+$1); }
   private int strCount = 0;
   private ArrayList<String> strTab = new ArrayList<String>();
 
-  private Stack<Integer> pRot = new Stack<Integer>();
+  private Stack<Integer> pCond = new Stack<Integer>();
+  private Stack<Integer> pLoop = new Stack<Integer>();
   private int proxRot = 1;
 
 
