@@ -6,7 +6,7 @@
 %}
  
 
-%token ID, INT, FLOAT, BOOL, NUM, LIT, VOID, MAIN, READ, WRITE, IF, ELSE
+%token ID, INT, FLOAT, BOOL, NUM, LIT, VOID, MAIN, READ, WRITE
 %token WHILE,TRUE, FALSE, IF, ELSE
 %token EQ, LEQ, GEQ, NEQ 
 %token AND, OR
@@ -56,7 +56,9 @@ lcmd : lcmd cmd
 	   |
 	   ;
 	   
-cmd :  exp	';' {System.out.println("\tPOPL %EAX");}
+cmd :  exp	';' {
+					System.out.println("\tPOPL %EAX"); // descarta resultado da expressão da pilha
+				} 
 
 	  | '{' lcmd '}' { System.out.println("\t\t# terminou o bloco..."); }					     
 					       
@@ -122,70 +124,70 @@ cmd :  exp	';' {System.out.println("\tPOPL %EAX");}
 								}
 
 	| DO {
-		pLoop.push(proxRot);  proxRot += 2;
-		System.out.printf("rot_%02d:\n", pLoop.peek());   // início do laço
-	}
+			pLoop.push(proxRot);  proxRot += 2;
+			System.out.printf("rot_%02d:\n", pLoop.peek());   // início do laço
+		}
 	'{' lcmd '}'
 	WHILE '(' exp ')' ';'
-	{
-		System.out.println("\tPOPL %EAX   # testa condicao do do-while...");
-		System.out.println("\tCMPL $0, %EAX");
-		System.out.printf("\tJNE rot_%02d\n", pLoop.peek());     // se verdadeiro, volta pro início
-		System.out.printf("rot_%02d:\n", (int)pLoop.peek()+1);   // saída do laço
-		pLoop.pop();
-	}
+		{
+			System.out.println("\tPOPL %EAX");
+			System.out.println("\tCMPL $0, %EAX");
+			System.out.printf("\tJNE rot_%02d\n", pLoop.peek());     // se verdadeiro, volta pro início
+			System.out.printf("rot_%02d:\n", (int)pLoop.peek()+1);   // saída do laço - para onde o break vai
+			pLoop.pop();
+		}
 
 | FOR '(' expfor1 ';'
-    {
-        /* 
-         *   rot      = incremento   (continue)
-         *   rot + 1  = saída        (break)
-         *   rot + 2  = cmd
-         *   rot + 3  = teste
-         */
-        pLoop.push(proxRot);
-        proxRot += 4;
-        
-        int base = pLoop.peek();
+		{
+			/* 
+			*   rot      = incremento   (continue)
+			*   rot + 1  = saída        (break)
+			*   rot + 2  = cmd
+			*   rot + 3  = teste
+			*/
+			pLoop.push(proxRot);
+			proxRot += 4;
+			
+			int base = pLoop.peek();
 
-        // rotulo teste
-        System.out.printf("rot_%02d:\n", base + 3);  
-    }
+			// rotulo teste
+			System.out.printf("rot_%02d:\n", base + 3);  
+		}
     expfor2
-    {
-        System.out.println("\tPOPL %EAX");
-        System.out.println("\tCMPL $0, %EAX");
+		{
+			System.out.println("\tPOPL %EAX");
+			System.out.println("\tCMPL $0, %EAX");
 
-        //condição falsa , vai para saida
-        System.out.printf("\tJE rot_%02d\n", pLoop.peek() + 1);
+			//condição falsa , vai para saida
+			System.out.printf("\tJE rot_%02d\n", pLoop.peek() + 1);
 
-        //condicao verdadeiro, vai para cmd
-        System.out.printf("\tJMP rot_%02d\n", pLoop.peek() + 2);
-    }
+			//condicao verdadeiro, vai para cmd
+			System.out.printf("\tJMP rot_%02d\n", pLoop.peek() + 2);
+		}
     ';'
-    {
-        // rotulo incremento
-        System.out.printf("rot_%02d:\n", pLoop.peek());
-    }
+		{
+			// rotulo incremento
+			System.out.printf("rot_%02d:\n", pLoop.peek());
+		}
     expfor1
-    {
-        //incrementou, vai para teste
-        System.out.printf("\tJMP rot_%02d\n", pLoop.peek() + 3);
+		{
+			//incrementou, vai para teste
+			System.out.printf("\tJMP rot_%02d\n", pLoop.peek() + 3);
 
-        //rotulo cmd
-        System.out.printf("rot_%02d:\n", pLoop.peek() + 2);
-    }
+			//rotulo cmd
+			System.out.printf("rot_%02d:\n", pLoop.peek() + 2);
+		}
     ')'
     cmd
-    {
-        //terminou comando, vai p incremento
-        System.out.printf("\tJMP rot_%02d\n", pLoop.peek());
+		{
+			//terminou comando, vai p incremento
+			System.out.printf("\tJMP rot_%02d\n", pLoop.peek());
 
-        //rotulo saida
-        System.out.printf("rot_%02d:\n", pLoop.peek() + 1);
+			//rotulo saida
+			System.out.printf("rot_%02d:\n", pLoop.peek() + 1);
 
-        pLoop.pop();
-    }
+			pLoop.pop();
+		}
 
 	| BREAK ';'
       {
@@ -248,7 +250,7 @@ expfor2
 exp :  NUM  { System.out.println("\tPUSHL $"+$1); } 
     |  TRUE  { System.out.println("\tPUSHL $1"); } 
     |  FALSE  { System.out.println("\tPUSHL $0"); }      
- 		| ID   { System.out.println("\tPUSHL _"+$1); }
+ 	| ID   { System.out.println("\tPUSHL _"+$1); }
     | '(' exp	')' 
     | '!' exp       { gcExpNot(); }
 	| exp '+' exp		{ gcExpArit('+'); }
@@ -267,75 +269,76 @@ exp :  NUM  { System.out.println("\tPUSHL $"+$1); }
 	| exp OR exp		{ gcExpLog(OR); }											
 	| exp AND exp		{ gcExpLog(AND); }											
 	| ID '=' exp
-	{
-		System.out.println("\tPOPL %EDX");                     // EDX = valor
-		System.out.println("\tMOVL %EDX, _"+$1);               // _id = valor
-		System.out.println("\tPUSHL %EDX");                    // deixa valor no topo (resultado da expressão)
-	}
+		{	
+			System.out.println("\tPOPL %EDX");                     
+			System.out.println("\tMOVL %EDX, _"+$1);               
+			System.out.println("\tPUSHL %EDX");                    
+		}
 
 	| ID PLUSEQUAL exp
-	{
-		System.out.println("\tPUSHL _"+$1);                    // empilha id
-		gcExpArit('+');                                        // (id) + (exp) -> topo
-		System.out.println("\tPOPL %EDX");                     // EDX = soma
-		System.out.println("\tMOVL %EDX, _"+$1);               // _id = soma
-		System.out.println("\tPUSHL %EDX");                    // deixa valor no topo (resultado da expressão)
-	}
+		{
+			System.out.println("\tPUSHL _"+$1);
+			gcExpArit('+');
+			System.out.println("\tPOPL %EDX");
+			System.out.println("\tMOVL %EDX, _"+$1);
+			System.out.println("\tPUSHL %EDX");
+		}
 
 	| INC ID
-	{
-	System.out.println("\tPUSHL _"+$2);
-	System.out.println("\tPUSHL $1");
-	gcExpArit('+');
-	System.out.println("\tPOPL %EDX");
-	System.out.println("\tMOVL %EDX, _"+$2);
-	System.out.println("\tPUSHL _"+$2);
-	}
+		{
+			System.out.println("\tPUSHL _"+$2);
+			System.out.println("\tPUSHL $1");
+			gcExpArit('+');
+			System.out.println("\tPOPL %EDX");
+			System.out.println("\tMOVL %EDX, _"+$2);
+			System.out.println("\tPUSHL _"+$2);
+		}
 
 	| DEC ID
-	{
-	System.out.println("\tPUSHL _"+$2);
-	System.out.println("\tPUSHL $1");
-	gcExpArit('-');
-	System.out.println("\tPOPL %EDX");
-	System.out.println("\tMOVL %EDX, _"+$2);
-	System.out.println("\tPUSHL _"+$2);
-	}
+		{
+			System.out.println("\tPUSHL _"+$2);
+			System.out.println("\tPUSHL $1");
+			gcExpArit('-');
+			System.out.println("\tPOPL %EDX");
+			System.out.println("\tMOVL %EDX, _"+$2);
+			System.out.println("\tPUSHL _"+$2);
+		}
 
 	| ID INC
-	{
-	System.out.println("\tPUSHL _"+$1);
-	System.out.println("\tPUSHL $1");
-	gcExpArit('+');
-	System.out.println("\tPOPL %EDX");
-	System.out.println("\tPUSHL _"+$1);
-	System.out.println("\tMOVL %EDX, _"+$1);
-	}
+		{
+			System.out.println("\tPUSHL _"+$1);
+			System.out.println("\tPUSHL $1");
+			gcExpArit('+');
+			System.out.println("\tPOPL %EDX");
+			System.out.println("\tPUSHL _"+$1);
+			System.out.println("\tMOVL %EDX, _"+$1);
+		}
 
 	| ID DEC
-	{
-	System.out.println("\tPUSHL _"+$1);
-	System.out.println("\tPUSHL $1");
-	gcExpArit('-');
-	System.out.println("\tPOPL %EDX");
-	System.out.println("\tPUSHL _"+$1);
-	System.out.println("\tMOVL %EDX, _"+$1);
-	}
+		{
+			System.out.println("\tPUSHL _"+$1);
+			System.out.println("\tPUSHL $1");
+			gcExpArit('-');
+			System.out.println("\tPOPL %EDX");
+			System.out.println("\tPUSHL _"+$1);
+			System.out.println("\tMOVL %EDX, _"+$1);
+		}
+
 	| exp '?'
 		{
 			pCond.push(proxRot);  proxRot += 2; 
 			System.out.println("\tPOPL %EAX");
 			System.out.println("\tCMPL $0, %EAX");
-			System.out.printf("\tJE rot_%02d\n", pCond.peek());
+			System.out.printf("\tJE rot_%02d\n", pCond.peek()); // se falso, vai para parte falsa
 		}
 	exp
 		{
-			System.out.printf("\tJMP rot_%02d\n", pCond.peek()+1);
-			System.out.printf("rot_%02d:\n", pCond.peek());
+			System.out.printf("\tJMP rot_%02d\n", pCond.peek()+1); // executou a expressao verdadeira, pula a parte falsa
+			System.out.printf("rot_%02d:\n", pCond.peek()); // rotulo da parte falsa
 		}
 	':' exp
 		{
-			System.out.printf("rot_%02d:\n", pCond.peek()+1);      
+			System.out.printf("rot_%02d:\n", pCond.peek()+1);  //routulo de saída para pular a parte falsa
 			pCond.pop();
 		}
 	;							
