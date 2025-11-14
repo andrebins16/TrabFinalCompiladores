@@ -134,55 +134,58 @@ cmd :  exp	';' {System.out.println("\tPOPL %EAX");}
 		pRot.pop();
 	}
 
-	 | FOR '(' expfor1 ';'
-        {
-            // Depois da inicialização (expfor1), alocamos 4 rótulos
-            // base      = saída
-            // base+1    = corpo
-            // base+2    = incremento
-            // base+3    = teste
-            pRot.push(proxRot);
-            proxRot += 4;
+| FOR '(' expfor1 ';'
+    {
+        /* 
+         *   rot      = incremento   (continue)
+         *   rot + 1  = saída        (break)
+         *   rot + 2  = cmd
+         *   rot + 3  = teste
+         */
+        pRot.push(proxRot);
+        proxRot += 4;
+        
+        int base = pRot.peek();
 
-            // rótulo do teste (L4)
-            System.out.printf("rot_%02d:\n", pRot.peek() + 3);
-        }
-        expfor2
-        {
-            // Aqui, expfor2 deixou a condição no topo da pilha
-            System.out.println("\tPOPL %EAX   # testa condicao do for");
-            System.out.println("\tCMPL $0, %EAX");
-            // se zero (falso) -> sai (L1)
-            System.out.printf("\tJE rot_%02d\n", pRot.peek());       // L1: saida
-            // se verdadeiro -> vai pro corpo (L2)
-            System.out.printf("\tJMP rot_%02d\n", pRot.peek() + 1);  // L2: corpo
+        // rotulo teste
+        System.out.printf("rot_%02d:\n", base + 3);  
+    }
+    expfor2
+    {
+        System.out.println("\tPOPL %EAX");
+        System.out.println("\tCMPL $0, %EAX");
 
-            // rótulo do incremento (L3)
-            System.out.printf("rot_%02d:\n", pRot.peek() + 2);       // L3: incremento
-        }
-        ';'
-        expfor1
-        {
-            // Isso é a terceira expressão do for (incremento), já gerada logo após L3
-            // Depois do incremento, volta pro teste (L4)
-            System.out.printf("\tJMP rot_%02d\n", pRot.peek() + 3);  // volta pro teste
+        //condição falsa , vai para saida
+        System.out.printf("\tJE rot_%02d\n", pRot.peek() + 1);
 
-            // rótulo do corpo (L2)
-            System.out.printf("rot_%02d:\n", pRot.peek() + 1);       // L2: corpo
-        }
-        ')'
-        cmd
-        {
-            // Após o corpo, vai para o incremento (L3)
-            System.out.printf("\tJMP rot_%02d\n", pRot.peek() + 2);  // vai pro incremento
+        //condicao verdadeiro, vai para cmd
+        System.out.printf("\tJMP rot_%02d\n", pRot.peek() + 2);
+    }
+    ';'
+    {
+        // rotulo incremento
+        System.out.printf("rot_%02d:\n", pRot.peek());
+    }
+    expfor1
+    {
+        //incrementou, vai para teste
+        System.out.printf("\tJMP rot_%02d\n", pRot.peek() + 3);
 
-            // rótulo de saída (L1)
-            System.out.printf("rot_%02d:\n", pRot.peek());           // L1: saida
-            pRot.pop();
-        }
+        //rotulo cmd
+        System.out.printf("rot_%02d:\n", pRot.peek() + 2);
+    }
+    ')'
+    cmd
+    {
+        //terminou comando, vai p incremento
+        System.out.printf("\tJMP rot_%02d\n", pRot.peek());
 
+        //rotulo saida
+        System.out.printf("rot_%02d:\n", pRot.peek() + 1);
 
-     ;
+        pRot.pop();
+    }
+    ;
      
      
 restoIf : ELSE  {
